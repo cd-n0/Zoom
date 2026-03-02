@@ -1,10 +1,8 @@
+#include <Geode/platform/cplatform.h>
 #ifdef GEODE_IS_DESKTOP
-
 #include "utils.hpp"
 #include "desktop.hpp"
 #include "settings.hpp"
-
-#include <geode.custom-keybinds/include/Keybinds.hpp>
 
 #include <Geode/Geode.hpp>
 
@@ -20,7 +18,6 @@
 #include <Geode/modify/CCScheduler.hpp>
 
 using namespace geode::prelude;
-using namespace keybinds;
 
 WindowsZoomManager* WindowsZoomManager::get() {
 	static auto inst = new WindowsZoomManager;
@@ -173,13 +170,15 @@ void WindowsZoomManager::onScreenModified() {
 
 class $modify(PauseLayer) {
 	void customSetup() {
-		this->template addEventListener<InvokeBindFilter>([=](InvokeBindEvent* event) {
-			if (event->isDown()) {
-				WindowsZoomManager::get()->togglePauseMenu();
-			}
 
-			return ListenerResult::Propagate;
-		}, "toggle_menu"_spr);
+        this->addEventListener(
+            KeybindSettingPressedEventV3(Mod::get(), "toggle_menu"_spr),
+            [this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
+                if (down && !repeat) {
+                    // do something
+                }
+            }
+        );
 
 		PauseLayer::customSetup();
 	}
@@ -235,20 +234,33 @@ class $modify(CCScheduler) {
 };
 
 #ifdef GEODE_IS_WINDOWS
-class $modify(CCEGLView) {
-	void onGLFWMouseCallBack(GLFWwindow* window, int button, int action, int mods) {
-		if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
-			if (action == GLFW_PRESS) {
-				WindowsZoomManager::get()->isPanning = true;
-			}
-			else if (action == GLFW_RELEASE) {
-				WindowsZoomManager::get()->isPanning = false;
-			}
-		}
-
-		CCEGLView::onGLFWMouseCallBack(window, button, action, mods);
-	}
-};
+//class $modify(CCEGLView) {
+//	void onGLFWMouseCallBack(GLFWwindow* window, int button, int action, int mods) {
+//		if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+//			if (action == GLFW_PRESS) {
+//				WindowsZoomManager::get()->isPanning = true;
+//			}
+//			else if (action == GLFW_RELEASE) {
+//				WindowsZoomManager::get()->isPanning = false;
+//			}
+//		}
+//
+//		CCEGLView::onGLFWMouseCallBack(window, button, action, mods);
+//	}
+//};
+$execute {
+    MouseInputEvent().listen([](MouseInputData& input) -> bool {
+        if (input.button == MouseInputData::Button::Middle) {
+            if (input.action == MouseInputData::Action::Press) {
+                WindowsZoomManager::get()->isPanning = true;
+            }
+            else if (input.action == MouseInputData::Action::Release) {
+                WindowsZoomManager::get()->isPanning = false;
+            }
+        }
+        return ListenerResult::Propagate;
+    }).leak();
+}
 #else
 void otherMouseDownHook(void* self, SEL sel, void* event) {
 	WindowsZoomManager::get()->isPanning = true;

@@ -1,3 +1,4 @@
+#include <Geode/platform/cplatform.h>
 #ifdef GEODE_IS_DESKTOP
 #pragma once
 
