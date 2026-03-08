@@ -64,6 +64,13 @@
 			"type": "bool",
 			"default": true,
 			"platforms": ["win", "mac"]
+		},
+		"toggle_menu": {
+			"name": "Toggle Pause Menu",
+			"description": "",
+			"type": "keybind",
+			"category": "gameplay",
+			"default": "Home"
 		}
 	}
 }

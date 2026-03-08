@@ -1,6 +1,7 @@
 #include "settings.hpp"
 
 #include <Geode/Geode.hpp>
+#include <Geode/platform/cplatform.h>
 
 using namespace geode::prelude;
 
@@ -27,9 +28,9 @@ void SettingsManager::init() {
 	});
 
 	zoomSensitivity = Mod::get()->getSettingValue<float>("zoom-sensitivity");
-	listenForSettingChanges<bool>("zoom-sensitivity", [&](float sensitivity) {
+	listenForSettingChanges<float>("zoom-sensitivity", [&](float sensitivity) {
 		zoomSensitivity = sensitivity;
 	});
 
-    #endif
+	#endif // GEODE_IS_DESKTOP
 }

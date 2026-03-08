@@ -170,15 +170,14 @@ void WindowsZoomManager::onScreenModified() {
 
 class $modify(PauseLayer) {
 	void customSetup() {
-
-        this->addEventListener(
-            KeybindSettingPressedEventV3(Mod::get(), "toggle_menu"_spr),
-            [this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
-                if (down && !repeat) {
-                    // do something
-                }
-            }
-        );
+		this->addEventListener(
+			KeybindSettingPressedEventV3(Mod::get(), "toggle_menu"),
+			[this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
+				if (down && !repeat) {
+					WindowsZoomManager::get()->togglePauseMenu();
+				}
+			}
+		);
 
 		PauseLayer::customSetup();
 	}
@@ -233,55 +232,19 @@ class $modify(CCScheduler) {
 	}
 };
 
-#ifdef GEODE_IS_WINDOWS
-//class $modify(CCEGLView) {
-//	void onGLFWMouseCallBack(GLFWwindow* window, int button, int action, int mods) {
-//		if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
-//			if (action == GLFW_PRESS) {
-//				WindowsZoomManager::get()->isPanning = true;
-//			}
-//			else if (action == GLFW_RELEASE) {
-//				WindowsZoomManager::get()->isPanning = false;
-//			}
-//		}
-//
-//		CCEGLView::onGLFWMouseCallBack(window, button, action, mods);
-//	}
-//};
 $execute {
-    MouseInputEvent().listen([](MouseInputData& input) -> bool {
-        if (input.button == MouseInputData::Button::Middle) {
-            if (input.action == MouseInputData::Action::Press) {
-                WindowsZoomManager::get()->isPanning = true;
-            }
-            else if (input.action == MouseInputData::Action::Release) {
-                WindowsZoomManager::get()->isPanning = false;
-            }
-        }
-        return ListenerResult::Propagate;
-    }).leak();
+	MouseInputEvent().listen([](MouseInputData& input) -> bool {
+		if (input.button == MouseInputData::Button::Middle) {
+			if (input.action == MouseInputData::Action::Press) {
+				WindowsZoomManager::get()->isPanning = true;
+			}
+			else if (input.action == MouseInputData::Action::Release) {
+				WindowsZoomManager::get()->isPanning = false;
+			}
+		}
+		return ListenerResult::Propagate;
+	}).leak();
 }
-#else
-void otherMouseDownHook(void* self, SEL sel, void* event) {
-	WindowsZoomManager::get()->isPanning = true;
-	reinterpret_cast<void(*)(void*, SEL, void*)>(objc_msgSend)(self, sel, event);
-}
-
-void otherMouseUpHook(void* self, SEL sel, void* event) {
-	WindowsZoomManager::get()->isPanning = false;
-	reinterpret_cast<void(*)(void*, SEL, void*)>(objc_msgSend)(self, sel, event);
-}
-
-$execute {
-	if (auto hook = ObjcHook::create("EAGLView", "otherMouseDown:", &otherMouseDownHook)) {
-		(void) Mod::get()->claimHook(hook.unwrap());
-	}
-	
-	if (auto hook = ObjcHook::create("EAGLView", "otherMouseUp:", &otherMouseUpHook)) {
-		(void) Mod::get()->claimHook(hook.unwrap());
-	}
-}
-#endif // GEODE_IS_WINDOWS
 
 class $modify(CCMouseDispatcher) {
 	bool dispatchScrollMSG(float y, float x) {
